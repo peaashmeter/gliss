@@ -1,22 +1,25 @@
-pub type Term {
-  Title(data: String)
-  Tempo(data: Int)
-  Instrument(data: Int)
-  Track(data: List(#(List(Int), Float)))
+import gleam/int
+import gleam/string
+import parse_error
+
+pub type TrackTerm {
+  Tempo(value: Int)
+  Instrument(value: Int)
+  Chord(value: #(List(Int), Float))
 }
 
-pub fn new_title() {
-  Title("Some Chords")
+pub fn parse_tempo(str: String) {
+  let trimmed = str |> string.trim
+  case trimmed |> int.parse {
+    Error(_) -> parse_error.SyntaxError(str) |> Error
+    Ok(bpm) -> Tempo(bpm) |> Ok
+  }
 }
 
-pub fn new_tempo() {
-  Tempo(120)
-}
-
-pub fn new_instrument() {
-  Instrument(0)
-}
-
-pub fn new_track() {
-  Track([])
+pub fn parse_instrument(str: String) {
+  let trimmed = str |> string.trim
+  case trimmed |> int.parse {
+    Error(_) -> parse_error.SyntaxError(str) |> Error
+    Ok(bpm) -> Instrument(bpm) |> Ok
+  }
 }

@@ -2,24 +2,24 @@ import gleam/bit_array
 import gleam/float
 import gleam/int
 import gleam/list
+import term
 
 const ticks_per_beat: Int = 480
 
-pub fn build_midi(
-  track: List(#(List(Int), Float)),
-  ins: Int,
-  bpm: Int,
-) -> BitArray {
-  let tempo_event = set_tempo(bpm)
-  let instrument_event = program_change(ins)
+pub fn build_midi(track: List(term.TrackTerm)) -> BitArray {
+  let track_events =
+    track
+    |> list.map(fn(term) {
+      case term {
+        term.Chord(c) -> add_chord(c)
+        term.Instrument(ins) -> [program_change(ins)]
+        term.Tempo(bpm) -> [set_tempo(bpm)]
+      }
+    })
+    |> list.flatten
+    |> build_track
 
-  let note_events = build_notes(track)
-  let all_events =
-    [tempo_event, instrument_event, ..note_events]
-    |> list.append([end_of_track()])
-  let track_chunk = build_track(all_events)
-
-  [midi_header(), track_chunk] |> bit_array.concat
+  [midi_header(), track_events, end_of_track()] |> bit_array.concat
 }
 
 fn midi_header() -> BitArray {
@@ -65,28 +65,22 @@ fn build_track(events: List(BitArray)) -> BitArray {
   track_header(body)
 }
 
-fn build_notes(entries: List(#(List(Int), Float))) -> List(BitArray) {
-  case entries {
+fn add_chord(chord: #(List(Int), Float)) -> List(BitArray) {
+  let #(notes, duration) = chord
+  let ticks = float.round(duration *. { ticks_per_beat |> int.to_float })
+
+  let ons = notes |> list.map(note_on(_, 90))
+
+  let offs = case notes {
     [] -> []
-    [#(notes, duration), ..rest] -> {
-      let ticks =
-        float.round(duration *. { ticks_per_beat |> int.to_float }) |> echo
-
-      let ons = notes |> list.map(note_on(_, 90))
-
-      let offs = case notes {
-        [] -> []
-        [first, ..rest] -> {
-          let first_off = note_off(first, 90, ticks)
-          let rest_offs = rest |> list.map(note_off(_, 90, 0))
-          [first_off, ..rest_offs]
-        }
-      }
-
-      ons
-      |> list.append(offs |> list.append(build_notes(rest)))
+    [first, ..rest] -> {
+      let first_off = note_off(first, 90, ticks)
+      let rest_offs = rest |> list.map(note_off(_, 90, 0))
+      [first_off, ..rest_offs]
     }
   }
+
+  ons |> list.append(offs)
 }
 
 fn encode_varlen(value: Int) -> BitArray {
