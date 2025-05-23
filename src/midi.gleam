@@ -6,7 +6,10 @@ import term
 
 const ticks_per_beat: Int = 480
 
+const velocity = 90
+
 pub fn build_midi(track: List(term.TrackTerm)) -> BitArray {
+  track |> echo
   let track_events =
     track
     |> list.map(fn(term) {
@@ -67,20 +70,31 @@ fn build_track(events: List(BitArray)) -> BitArray {
 
 fn add_chord(chord: #(List(Int), Float)) -> List(BitArray) {
   let #(notes, duration) = chord
-  let ticks = float.round(duration *. { ticks_per_beat |> int.to_float })
+  let ticks =
+    float.round(duration *. { ticks_per_beat |> int.to_float }) |> echo
 
-  let ons = notes |> list.map(note_on(_, 90))
+  case notes {
+    // rest
+    [] -> {
+      let on = note_on(0, 0)
+      let off = note_off(0, 0, ticks)
+      [on, off]
+    }
+    _ -> {
+      let ons = notes |> list.map(note_on(_, velocity))
 
-  let offs = case notes {
-    [] -> []
-    [first, ..rest] -> {
-      let first_off = note_off(first, 90, ticks)
-      let rest_offs = rest |> list.map(note_off(_, 90, 0))
-      [first_off, ..rest_offs]
+      let offs = case notes {
+        [first, ..rest] -> {
+          let first_off = note_off(first, velocity, ticks)
+          let rest_offs = rest |> list.map(note_off(_, velocity, 0))
+          [first_off, ..rest_offs]
+        }
+        [] -> []
+      }
+
+      ons |> list.append(offs)
     }
   }
-
-  ons |> list.append(offs)
 }
 
 fn encode_varlen(value: Int) -> BitArray {

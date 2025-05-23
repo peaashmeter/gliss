@@ -9,8 +9,9 @@ import parse_error
 const chord_octave = 4
 
 pub type Chord {
-  Chord(data: String, duration: String)
-  RawChord(notes: List(String), duration: String)
+  Chord(duration: String, data: String)
+  RawChord(duration: String, notes: List(String))
+  Rest(duration: String)
 }
 
 pub fn parse_chords_line(input: String) -> List(Chord) {
@@ -30,7 +31,10 @@ fn parse_chords_line_step(chars: List(String), acc: List(Chord)) {
         chord |> list.drop_while(fn(char) { char != "]" }) |> list.drop(1)
       let #(duration, rest) = rest |> parse_duration
       parse_chords_line_step(rest, [
-        Chord(inner |> string.concat, duration |> string.concat),
+        case inner {
+          [] -> Rest(duration |> string.concat)
+          __ -> Chord(duration |> string.concat, inner |> string.concat)
+        },
         ..acc
       ])
     }
@@ -40,10 +44,17 @@ fn parse_chords_line_step(chars: List(String), acc: List(Chord)) {
         chord |> list.drop_while(fn(char) { char != ")" }) |> list.drop(1)
       let #(duration, rest) = rest |> parse_duration
       parse_chords_line_step(rest, [
-        RawChord(
-          inner |> string.concat |> string.split(",") |> list.map(string.trim),
-          duration |> string.concat,
-        ),
+        case inner {
+          [] -> Rest(duration |> string.concat)
+          _ ->
+            RawChord(
+              duration |> string.concat,
+              inner
+                |> string.concat
+                |> string.split(",")
+                |> list.map(string.trim),
+            )
+        },
         ..acc
       ])
     }
@@ -73,16 +84,18 @@ fn is_not_empty(char) {
 }
 
 pub fn parse_chord(chord: Chord) {
+  use duration <- result.try(
+    chord.duration
+    |> parse_number
+    |> result.map_error(fn(_) { parse_error.SyntaxError(chord.duration) }),
+  )
   case chord {
-    Chord(data, duration) -> {
+    Chord(_, data) -> {
       use split <- result.try(split_chord(data))
       use midipoints <- result.try(split |> map_chord)
-      case duration |> parse_number {
-        Error(_) -> parse_error.SyntaxError(duration) |> Error
-        Ok(d) -> #(midipoints, d) |> Ok
-      }
+      #(midipoints, duration) |> Ok
     }
-    RawChord(notes, duration) -> {
+    RawChord(_, notes) -> {
       use split <- result.try(notes |> list.try_map(split_chord))
       use midipoints <- result.try(
         split
@@ -97,11 +110,9 @@ pub fn parse_chord(chord: Chord) {
         |> result.all,
       )
 
-      case duration |> parse_number {
-        Error(_) -> parse_error.SyntaxError(duration) |> Error
-        Ok(d) -> #(midipoints, d) |> Ok
-      }
+      #(midipoints, duration) |> Ok
     }
+    Rest(_) -> #([], duration) |> Ok
   }
 }
 
