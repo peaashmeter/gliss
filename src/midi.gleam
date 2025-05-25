@@ -9,7 +9,6 @@ const ticks_per_beat: Int = 480
 const velocity = 90
 
 pub fn build_midi(track: List(term.TrackTerm)) -> BitArray {
-  track |> echo
   let track_events =
     track
     |> list.map(fn(term) {
@@ -70,8 +69,7 @@ fn build_track(events: List(BitArray)) -> BitArray {
 
 fn add_chord(chord: #(List(Int), Float)) -> List(BitArray) {
   let #(notes, duration) = chord
-  let ticks =
-    float.round(duration *. { ticks_per_beat |> int.to_float }) |> echo
+  let ticks = float.round(duration *. { ticks_per_beat |> int.to_float })
 
   case notes {
     // rest
