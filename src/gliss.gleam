@@ -7,7 +7,7 @@ import shellout
 import simplifile
 
 pub fn main() {
-  let status = case shellout.arguments() |> echo {
+  let status = case shellout.arguments() {
     [in, out] -> {
       use source <- try(simplifile.read(in) |> result.map_error(string.inspect))
       use ast <- try(
