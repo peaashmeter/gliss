@@ -57,7 +57,7 @@ fn parse_line(line: String) {
 }
 
 fn strip_comment(line: String) {
-  case line |> string.split_once("#") {
+  case line |> string.split_once("//") {
     Error(_) -> line
     Ok(#(line, _)) -> line |> string.trim
   }

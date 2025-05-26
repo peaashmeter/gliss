@@ -118,18 +118,22 @@ pub fn parse_chord(chord: Chord) {
 
 fn split_chord(chord: String) {
   case chord {
-    "B#" <> rest | "C" <> rest -> Ok(#(0, rest))
+    "B#" <> rest -> Ok(#(0, rest))
     "C#" <> rest | "Db" <> rest -> Ok(#(1, rest))
-    "D" <> rest -> Ok(#(2, rest))
     "D#" <> rest | "Eb" <> rest -> Ok(#(3, rest))
-    "E" <> rest | "Fb" <> rest -> Ok(#(4, rest))
-    "E#" <> rest | "F" <> rest -> Ok(#(5, rest))
+    "Fb" <> rest -> Ok(#(4, rest))
+    "E#" <> rest -> Ok(#(5, rest))
     "F#" <> rest | "Gb" <> rest -> Ok(#(6, rest))
-    "G" <> rest -> Ok(#(7, rest))
     "G#" <> rest | "Ab" <> rest -> Ok(#(8, rest))
-    "A" <> rest -> Ok(#(9, rest))
     "A#" <> rest | "Bb" <> rest -> Ok(#(10, rest))
-    "B" <> rest | "Cb" <> rest -> Ok(#(11, rest))
+    "Cb" <> rest -> Ok(#(11, rest))
+    "C" <> rest -> Ok(#(0, rest))
+    "D" <> rest -> Ok(#(2, rest))
+    "E" <> rest -> Ok(#(4, rest))
+    "F" <> rest -> Ok(#(5, rest))
+    "G" <> rest -> Ok(#(7, rest))
+    "A" <> rest -> Ok(#(9, rest))
+    "B" <> rest -> Ok(#(11, rest))
     _ -> Error(parse_error.SyntaxError(chord))
   }
 }
