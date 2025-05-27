@@ -14,8 +14,8 @@ pub type Chord {
   Rest(duration: String)
 }
 
-pub fn parse_chords_line(input: String) -> List(Chord) {
-  parse_chords_line_step(input |> string.to_graphemes, [])
+pub fn parse_chords_line(line: String) -> List(Chord) {
+  parse_chords_line_step(line |> string.to_graphemes, [])
 }
 
 fn parse_chords_line_step(chars: List(String), acc: List(Chord)) {

@@ -13,7 +13,7 @@ pub fn build_midi(track: List(term.TrackTerm)) -> BitArray {
     track
     |> list.map(fn(term) {
       case term {
-        term.Chord(c) -> add_chord(c)
+        term.ChordLine(c) -> c |> list.map(add_chord) |> list.flatten
         term.Instrument(ins) -> [program_change(ins)]
         term.Tempo(bpm) -> [set_tempo(bpm)]
       }
