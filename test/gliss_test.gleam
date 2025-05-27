@@ -7,7 +7,7 @@ import term
 const source = "
     @instrument 1
     @tempo 100
-    [Cmaj7]:2 (C4, E4, G4, B4):2
+    [Cmaj7/A]:2 (C4, E4, G4, B4):2
     (C2):0.33 (C#2):0.33
     (D2) (D#2)
     (E2) (E#2)
